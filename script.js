@@ -10,19 +10,9 @@ class Game {
         this.context = this.renderer.getContext2d();
         this.canvas = this.renderer.getCanvas();
         this.checkBoard = new CheckBoard(this.canvas.width / 8);
-        this.pawns = [];
-        
-
-        this.canvas.addEventListener("mousedown", (e) => {
-            const rect = this.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            const col = Math.floor(x / this.checkBoard.size);
-            const row = Math.floor(y / this.checkBoard.size);
-
-            this.checkBoard.handleSelect(row, col);
-        })
+        this.pawnsBlack = [];
+        this.pawnsWhite = [];
+    
 
      
 
