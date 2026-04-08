@@ -33,14 +33,34 @@ class Game {
     startGame = () => {
         const fps = 60;
         setInterval(() => this.updateGame(), 1000/fps);
+        this.checkBoard.createPawns();
     }
 
     updateGame = () => {
-        //logika gry
-
+       
         
+        if(this.checkBoard.pawnsWhite.length === 0){
+            this.renderer.drawText("Czarne wygrywają!!!", 200, 200, "red");
+            setTimeout(() => this.restartGame(),1000);
+        }
+            if(this.checkBoard.pawnsBlack.length === 0){
+            this.renderer.drawText("Białe wygrywają!!!", 200, 200, "red");
+            setTimeout(() => this.restartGame(),1000);
+
+        }
 
         this.render();
+    }
+
+    restartGame = () => {
+        this.renderer.clear();
+        this.checkBoard.pawnsWhite = [];
+        this.checkBoard.pawnsBlack = [];
+        this.checkBoard.draw();
+        this.checkBoard.createPawns();
+        this.checkBoard.turn = "white";
+        this.checkBoard.selectedPawn = null;
+        
     }
 
     render = () => {

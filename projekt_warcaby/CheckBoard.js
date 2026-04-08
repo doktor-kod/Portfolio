@@ -26,7 +26,8 @@ constructor(size){
         this.pawnsWhite = [];
         this.pawnsBlack = [];
         this.selectedPawn = null;
-        this.createPawns();
+        
+        
     }
 
 createPawns = () => {
@@ -44,39 +45,73 @@ createPawns = () => {
 }
 
 handleSelect = (row, col) => {
+    //w jednej tablicy
     const allPawns = [...this.pawnsWhite, ...this.pawnsBlack];
+    //ustalenie ktory jest klikniety
     const clickedPawn = allPawns.find(p => p.row === row && p.col === col);
-    if (clickedPawn && this.selectedPawn && this.selectedPawn.selected && clickedPawn !== this.selectedPawn) {
-        return; 
-    }
+    //uniemozliwiam odkliknięcie innego
+    if (clickedPawn && this.selectedPawn && clickedPawn !== this.selectedPawn) return;
 
-    if(clickedPawn){
-        if(clickedPawn.color !==this.turn) return;
-        if(this.selectedPawn) this.selectedPawn.selected = false;
+    if (clickedPawn) {
+        //sprawdzenie tury
+        if (clickedPawn.color !== this.turn) return;
+        //ustawienie selekcji
+        if (this.selectedPawn) this.selectedPawn.selected = false;
         this.selectedPawn = clickedPawn;
         clickedPawn.selected = true;
-
-    }else if(this.selectedPawn){
-
+    } else if (this.selectedPawn) { //ruch ustalenie roznicy miedzy  kliknietym pionkiem a polem
         const rowDiff = row - this.selectedPawn.row;
-        const colDiff = Math.abs(col - this.selectedPawn.col);
+        const colDiff = col - this.selectedPawn.col;
         const absRowDiff = Math.abs(rowDiff);
         const absColDiff = Math.abs(colDiff);
-        const isCorrectDirection = (this.selectedPawn.color === "white") ? rowDiff === 1 : rowDiff === -1;
-        const canMove = this.selectedPawn.isQueen ? absRowDiff ===1 : isCorrectDirection;
-        if((row+ col)%2 !== 0 && colDiff === 1 && canMove){
-            this.moveSelectedPawn(row, col)
-        }else if (absRowDiff === 2 && absColDiff === 2){
-            const midRow = (row + this.selectedPawn.row) /2;
-            const midCol = (col + this.selectedPawn.col) /2;
 
-            const midPawn = allPawns.find(p => p.row === midRow && p.col === midCol);
-            if(midPawn && midPawn.color !== this.selectedPawn.color){
-                this.pawnsWhite = this.pawnsWhite.filter(p => p !== midPawn);
-                this.pawnsBlack = this.pawnsBlack.filter(p => p !== midPawn);
+        // zapewnienie ze pole jest po skosie i pole jest na pewno czarne
+        if (absRowDiff !== absColDiff || (row + col) % 2 === 0) return;
+        //czy idziemy w prawp/lewo góra/dół
+        const rowStep = rowDiff > 0 ? 1 : -1;
+        const colStep = colDiff > 0 ? 1 : -1;
 
-                this.moveSelectedPawn(row, col,true );
+        // Sprawdzanie co stoi na drodze po skosie 
+        let pathPawns = [];
+        //petla ktora sprawdza całą dostępną trasę po kolei i dodaje pionki do tablicy pionków na tej trasie
+        for (let i = 1; i < absRowDiff; i++) {
+            const checkRow = this.selectedPawn.row + i * rowStep;
+            const checkCol = this.selectedPawn.col + i * colStep;
+            const p = allPawns.find(p => p.row === checkRow && p.col === checkCol);
+            if (p) pathPawns.push(p);
+        }
+        //jezeli zaznaczony to damka
+        if (this.selectedPawn.isQueen) {
+            // LOGIKA DAMKI
+            //jezeli nie ma nic po drodze to dowolnie daleko moze isc
+            if (pathPawns.length === 0) {
+                // Ruch wolny (dowolna ilość pól)
+                this.moveSelectedPawn(row, col);
+                //jezeli za to jest po drodze to 1 staje sie ofiara i go usuwamy a pionek moze sie ruszyc i ruszac dalej w lancuchu zbicia
+            } else if (pathPawns.length === 1 && pathPawns[0].color !== this.selectedPawn.color) {
+                // Bicie (tylko 1 przeciwnik na drodze)
+                const victim = pathPawns[0];
+                this.pawnsWhite = this.pawnsWhite.filter(p => p !== victim);
+                this.pawnsBlack = this.pawnsBlack.filter(p => p !== victim);
+                this.moveSelectedPawn(row, col, true);
+            }
+        } else {
+            // LOGIKA ZWYKŁEGO PIONKA
+            //ustala poprawny kierunek ruchu
+            const isCorrectDir = (this.selectedPawn.color === "white") ? rowDiff === 1 : rowDiff === -1;
+            //zwykły ruch tylko o 1 i w dobrym kierunku
+            if (absRowDiff === 1 && isCorrectDir) {
+                this.moveSelectedPawn(row, col);
+                //ruch przy zbiciu usunięcie środkowego piona jezeli to pion przeciwnika
+            } else if (absRowDiff === 2) {
+                const midPawn = pathPawns[0];
+                if (midPawn && midPawn.color !== this.selectedPawn.color) {
+                    this.pawnsWhite = this.pawnsWhite.filter(p => p !== midPawn);
+                    this.pawnsBlack = this.pawnsBlack.filter(p => p !== midPawn);
+                    //umozliwienie lancucha zbic
 
+                    this.moveSelectedPawn(row, col, true);
+                }
             }
         }
     }
@@ -84,30 +119,45 @@ handleSelect = (row, col) => {
 
 canCaptureMore = (pawn) => {
     const allPawns = [...this.pawnsWhite, ...this.pawnsBlack];
+    //mozliwe kierunki
+    const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
 
-    
-    // Możliwe kierunki skoku o 2 pola (skosy)
-    const directions = [
-        { r: 2, c: 2 }, { r: 2, c: -2 },
-        { r: -2, c: 2 }, { r: -2, c: -2 }
-    ];
+    return directions.some(([dr, dc]) => {
+        if (pawn.isQueen) {
+            // Damka szuka przeciwnika w dowolnej odległości na linii
+            for (let dist = 1; dist < 7; dist++) {
+                const midR = pawn.row + dist * dr;
+                const midC = pawn.col + dist * dc;
+                
+                if (midR < 0 || midR > 7 || midC < 0 || midC > 7) break;
 
-    return directions.some(d => {
-        const targetRow = pawn.row + d.r;
-        const targetCol = pawn.col + d.c;
-        const midRow = pawn.row + d.r / 2;
-        const midCol = pawn.col + d.c / 2;
+                const midPawn = allPawns.find(p => p.row === midR && p.col === midC);
+                if (midPawn) {
+                    if (midPawn.color === pawn.color) break; // Zablokowane przez własny pionek
+                    
+                    // Znaleziono przeciwnika - sprawdź czy pole za nim jest wolne
+                    const nextR = midR + dr;
+                    const nextC = midC + dc;
+                    if (nextR < 0 || nextR > 7 || nextC < 0 || nextC > 7) break;
+                    
+                    const isNextEmpty = !allPawns.find(p => p.row === nextR && p.col === nextC);
+                    return isNextEmpty;
+                }
+            }
+        } else {
+            // Standardowe bicie dla pionka (zasięg 2)
+            const tr = pawn.row + dr * 2;
+            const tc = pawn.col + dc * 2;
+            const mr = pawn.row + dr;
+            const mc = pawn.col + dc;
 
-        // Czy cel jest wewnątrz planszy?
-        if (targetRow < 0 || targetRow > 7 || targetCol < 0 || targetCol > 7) return false;
-
-        // Czy pole docelowe jest puste?
-        const isTargetEmpty = !allPawns.find(p => p.row === targetRow && p.col === targetCol);
-        // Czy na środku stoi przeciwnik?
-        const midPawn = allPawns.find(p => p.row === midRow && p.col === midCol);
-        const isOpponentInMid = midPawn && midPawn.color !== pawn.color;
-
-        return isTargetEmpty && isOpponentInMid;
+            if (tr >= 0 && tr <= 7 && tc >= 0 && tc <= 7) {
+                const midPawn = allPawns.find(p => p.row === mr && p.col === mc);
+                const targetEmpty = !allPawns.find(p => p.row === tr && p.col === tc);
+                if (midPawn && midPawn.color !== pawn.color && targetEmpty) return true;
+            }
+        }
+        return false;
     });
 }
 
@@ -133,24 +183,24 @@ getPawnsBlack = () => {
 getPawnsWhite = () => {
     return this.pawnsWhite;
 }
-
+//row = docelowy rządm col docelowa kolumna, wasCapture czy moze po zbiciu dalej sie ruszac - łańcuch zbic
 moveSelectedPawn = (row, col, wasCapture = false) => {
     this.selectedPawn.row = row;
     this.selectedPawn.col = col;
-
+    //promocja na damkę
     if(this.selectedPawn.color === "white" && row === 7){
         this.selectedPawn.isQueen = true;
     }
         if(this.selectedPawn.color === "black" && row === 0){
         this.selectedPawn.isQueen = true;
     }
-
+    //jezeli dalej jest mozliwe bicie dopuszczamy go
      if (wasCapture && this.canCaptureMore(this.selectedPawn)) {
         console.log("Możesz wykonać kolejne bicie tym samym pionkiem!");
         // NIE zmieniamy tury, pionek zostaje wybrany
     }else{
     this.selectedPawn.selected = false;
-
+        //zmiana tury, wyczyszczenie selectów
     this.turn = (this.turn === "white") ? "black" : "white";
     this.selectedPawn = null;   }
 

@@ -31,6 +31,11 @@ class Renderer{
         this.context2d.fillText(str ,x ,y);
     }
 
+    clear = () => {
+    
+    this.context2d.clearRect(0, 0, this.canvas.width, this.canvas.height);
+}
+
     static getInstance(){
         if(!this.instance){
             this.instance = new Renderer();
