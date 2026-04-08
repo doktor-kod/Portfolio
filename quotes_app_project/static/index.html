@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Cytatów</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="lightbox">
+        <div id="editor">
+            <div class="form-container">
+                <form>
+                    <input type="text" id="new-quote-text" placeholder="Cytat">
+                    <input type="text" id="new-quote-author" placeholder="Autor">
+                    <button id="add-new-quote">Dodaj cytat</button>
+                </form>
+            </div>
+            <ul id="quotes-list">
+                <!--
+                <li class="list-item">
+                    <div class="quote-list-item">
+                        Autor 1: Cytat...
+                    </div>
+                    <div class="quote-list-item-delete">
+                        <a href="#" quote-id = "fxxsfsg">X</a>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <div class="quote-list-item">
+                        Autor 2: Cytat...
+                    </div>
+                    <div class="quote-list-item-delete">
+                        <a href="#" quote-id = "fxxsfsg">X</a>
+                    </div>
+                </li>
+                <li class="list-item">
+                    <div class="quote-list-item">
+                        Autor 3: Cytat...
+                    </div>
+                    <div class="quote-list-item-delete">
+                        <a href="#" quote-id = "fxxsfsg">X</a>
+                    </div>
+                </li>
+                -->
+            </ul>
+        </div>
+    </div>
+    <div id="quote-container" class="quote-container">
+        <div id="quote-text">
+            <span id="quote"></span>
+        </div>
+        <div id="quote-author">
+            <span id="author"></span>
+        </div>
+        <div id="button-container">
+            <button id="next-quote">Kolejny cytat!</button>
+        </div>
+    </div>
+    <script src="app.js"></script>
+    <script src="editor.js"></script>
+</body>
+</html>
